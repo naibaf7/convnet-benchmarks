@@ -34,21 +34,14 @@ function vgg_a(lib)
             features:add(SpatialMaxPooling(2,2,2,2))
          else
             local oChannels = v;
-	    if not padding then
-	       features:add(SpatialZeroPadding(1,1,1,1))
-	       if k >= 3 and lib[5] == 'fbfft' then -- fbfft runs out of memory at this point
-		  features:add(cudnn.SpatialConvolution(iChannels,oChannels,3,3,1,1))
-	       else
-		  features:add(SpatialConvolution(iChannels,oChannels,3,3,1,1))
-	       end
-	    else
-	       features:add(SpatialConvolution(iChannels,oChannels,3,3,1,1,1,1))
-	    end
+            features:add(SpatialConvolution(iChannels,oChannels,3,3,1,1,1,1))
             features:add(ReLU(true))
             iChannels = oChannels;
          end
       end
    end
+
+   features:get(1).gradInput = nil
 
    local classifier = nn.Sequential()
    classifier:add(nn.View(512*7*7))
@@ -63,7 +56,7 @@ function vgg_a(lib)
 
    local model = nn.Sequential()
    model:add(features):add(classifier)
-   
+
    return model,'VGG Model-' .. modelType, {64,3,224,224}
 end
 
